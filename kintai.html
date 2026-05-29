@@ -345,8 +345,12 @@
     border-radius: var(--radius);
     padding: 16px;
     margin-top: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: start;
   }
-  .copy-section h2 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+  .copy-section h2 { font-size: 14px; font-weight: 700; margin-bottom: 12px; grid-column: 1 / -1; }
   .copy-box {
     background: var(--bg);
     border: 1px solid var(--border);
@@ -361,6 +365,7 @@
     transition: border-color .15s;
   }
   .copy-box:hover { border-color: #aaa; }
+  .copy-label { font-size: 10px; color: var(--text-muted); margin-bottom: 6px; }
   .copy-toast {
     display: none;
     position: absolute; top: 8px; right: 10px;
@@ -454,9 +459,19 @@
 
   <div class="copy-section">
     <h2>コピー用テキスト</h2>
-    <div class="copy-box" id="copy-box" onclick="copyText()">
-      <span id="copy-content"></span>
-      <span class="copy-toast">コピーしました</span>
+    <div>
+      <div class="copy-label">交通費</div>
+      <div class="copy-box" id="copy-box-fare" onclick="copyFare()">
+        <span id="copy-content-fare"></span>
+        <span class="copy-toast">コピーしました</span>
+      </div>
+    </div>
+    <div>
+      <div class="copy-label">勤怠サマリー</div>
+      <div class="copy-box" id="copy-box-summary" onclick="copySummary()">
+        <span id="copy-content-summary"></span>
+        <span class="copy-toast">コピーしました</span>
+      </div>
     </div>
   </div>
 
@@ -661,17 +676,9 @@ function updateSummary(){
   document.getElementById('exp-total').textContent=`¥${fmt(totalExp)}`;
 
   // コピー用テキスト生成
-  const outingOnly = Object.values(overrides).filter(v=>v.type==='outing').length;
-  const copyLines = [
-    `¥${fmt(fare)} × ${koil}日=¥${fmt(koilExp)}`,
-    ``,
-    `${currentYear}年${currentMonth}月 勤怠サマリー`,
-    `出勤日数: ${totalWork}日`,
-    `KOIL: ${koil}日`,
-    `外出: ${outingDays}日`,
-    `在宅: ${home}日`,
-  ];
-  document.getElementById('copy-content').textContent = copyLines.join('\n');
+  document.getElementById('copy-content-fare').textContent = `¥${fmt(fare)} × ${koil}日=¥${fmt(koilExp)}`;
+  document.getElementById('copy-content-summary').textContent =
+    `${currentYear}年${currentMonth}月 勤怠サマリー\n出勤日数: ${totalWork}日\nKOIL: ${koil}日\n外出: ${outingDays}日\n在宅: ${home}日`;
 }
 
 function countOutingOnlyDays(){
@@ -788,10 +795,18 @@ document.getElementById('next-btn').addEventListener('click',()=>{
 
 document.getElementById('koil-fare').addEventListener('input',updateSummary);
 
-function copyText(){
-  const text = document.getElementById('copy-content').textContent;
+function copyFare(){
+  const text = document.getElementById('copy-content-fare').textContent;
   navigator.clipboard.writeText(text).then(()=>{
-    const box = document.getElementById('copy-box');
+    const box = document.getElementById('copy-box-fare');
+    box.classList.add('copied');
+    setTimeout(()=>box.classList.remove('copied'), 1500);
+  });
+}
+function copySummary(){
+  const text = document.getElementById('copy-content-summary').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const box = document.getElementById('copy-box-summary');
     box.classList.add('copied');
     setTimeout(()=>box.classList.remove('copied'), 1500);
   });
