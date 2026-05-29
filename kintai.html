@@ -485,7 +485,7 @@
   <div class="modal">
     <h2 id="modal-title">日付の編集</h2>
 
-    <div class="modal-field">
+    <div class="modal-field" id="modal-type-row">
       <label>勤務種別</label>
       <select id="modal-type">
         <option value="holiday">休日（土・日・祝・水休み）</option>
@@ -703,6 +703,7 @@ function openModal(k,d,currentType,currentOutings){
   const hasOuting = currentOutings.length>0 || currentType==='outing';
   document.getElementById('modal-outing-toggle').checked=hasOuting;
   document.getElementById('outing-fields').classList.toggle('visible',hasOuting);
+  document.getElementById('modal-type-row').style.display = hasOuting ? 'none' : '';
 
   const entriesEl=document.getElementById('outing-entries');
   entriesEl.innerHTML='';
@@ -729,6 +730,7 @@ function addOutingEntry(dest='', expense=0){
     if(document.getElementById('outing-entries').children.length===0){
       document.getElementById('modal-outing-toggle').checked=false;
       document.getElementById('outing-fields').classList.remove('visible');
+      document.getElementById('modal-type-row').style.display='';
     }
   });
   entriesEl.appendChild(div);
@@ -737,8 +739,10 @@ function addOutingEntry(dest='', expense=0){
 document.getElementById('modal-outing-toggle').addEventListener('change',function(){
   const fields=document.getElementById('outing-fields');
   fields.classList.toggle('visible',this.checked);
-  if(this.checked && document.getElementById('outing-entries').children.length===0){
-    addOutingEntry('',0);
+  document.getElementById('modal-type-row').style.display = this.checked ? 'none' : '';
+  if(this.checked){
+    document.getElementById('modal-type').value='outing';
+    if(document.getElementById('outing-entries').children.length===0) addOutingEntry('',0);
   }
 });
 
