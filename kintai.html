@@ -338,6 +338,36 @@
   }
   .total-row .exp-val { font-family: var(--mono); font-size: 18px; }
   .note { font-size: 10px; color: var(--text-muted); margin-top: 8px; }
+
+  .copy-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 16px;
+  }
+  .copy-section h2 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+  .copy-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    white-space: pre;
+    line-height: 1.8;
+    cursor: pointer;
+    position: relative;
+    transition: border-color .15s;
+  }
+  .copy-box:hover { border-color: #aaa; }
+  .copy-toast {
+    display: none;
+    position: absolute; top: 8px; right: 10px;
+    font-size: 11px; color: var(--green);
+    font-family: var(--font);
+  }
+  .copy-box.copied .copy-toast { display: block; }
 </style>
 </head>
 <body>
@@ -420,6 +450,14 @@
       <span class="exp-val" id="exp-total">¥0</span>
     </div>
     <p class="note">※ KOIL交通費 = 往復運賃 × KOIL出社日数　／　外出交通費 = 各外出先の実費</p>
+  </div>
+
+  <div class="copy-section">
+    <h2>コピー用テキスト</h2>
+    <div class="copy-box" id="copy-box" onclick="copyText()">
+      <span id="copy-content"></span>
+      <span class="copy-toast">コピーしました</span>
+    </div>
   </div>
 
 </div>
@@ -621,6 +659,19 @@ function updateSummary(){
   }
 
   document.getElementById('exp-total').textContent=`¥${fmt(totalExp)}`;
+
+  // コピー用テキスト生成
+  const outingOnly = Object.values(overrides).filter(v=>v.type==='outing').length;
+  const copyLines = [
+    `¥${fmt(fare)} × ${koil}日=¥${fmt(koilExp)}`,
+    ``,
+    `${currentYear}年${currentMonth}月 勤怠サマリー`,
+    `出勤日数: ${totalWork}日`,
+    `KOIL: ${koil}日`,
+    `外出: ${outingDays}日`,
+    `在宅: ${home}日`,
+  ];
+  document.getElementById('copy-content').textContent = copyLines.join('\n');
 }
 
 function countOutingOnlyDays(){
@@ -736,6 +787,15 @@ document.getElementById('next-btn').addEventListener('click',()=>{
 });
 
 document.getElementById('koil-fare').addEventListener('input',updateSummary);
+
+function copyText(){
+  const text = document.getElementById('copy-content').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const box = document.getElementById('copy-box');
+    box.classList.add('copied');
+    setTimeout(()=>box.classList.remove('copied'), 1500);
+  });
+}
 
 updateMonthLabel();
 renderCalendar();
