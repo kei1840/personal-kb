@@ -675,7 +675,8 @@ function updateSummary(){
   document.getElementById('exp-total').textContent=`¥${fmt(totalExp)}`;
 
   // コピー用テキスト生成
-  document.getElementById('copy-content-fare').textContent = `¥${fmt(fare)} × ${koil}日=¥${fmt(koilExp)}`;
+  document.getElementById('copy-content-fare').textContent =
+    `KOIL交通費: ¥${fmt(fare)} × ${koil}日 = ¥${fmt(koilExp)}\nその他交通費: ¥${fmt(extraExp)}\n合計: ¥${fmt(totalExp)}`;
   document.getElementById('copy-content-summary').textContent =
     `${currentYear}年${currentMonth}月 勤怠サマリー\n出勤日数: ${totalWork}日\nKOIL: ${koil}日\n外出: ${outingDays}日\n在宅: ${home}日`;
 }
