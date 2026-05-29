@@ -351,28 +351,32 @@
     align-items: start;
   }
   .copy-section h2 { font-size: 14px; font-weight: 700; margin-bottom: 12px; grid-column: 1 / -1; }
+  .copy-item { display: flex; flex-direction: column; gap: 6px; }
+  .copy-label { font-size: 10px; color: var(--text-muted); }
   .copy-box {
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 12px 14px;
+    padding: 10px 12px;
     font-family: var(--mono);
     font-size: 13px;
-    white-space: pre;
-    line-height: 1.8;
+    white-space: pre-wrap;
+    line-height: 1.7;
+  }
+  .copy-btn {
+    align-self: flex-start;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 5px 14px;
+    font-size: 12px;
     cursor: pointer;
-    position: relative;
-    transition: border-color .15s;
-  }
-  .copy-box:hover { border-color: #aaa; }
-  .copy-label { font-size: 10px; color: var(--text-muted); margin-bottom: 6px; }
-  .copy-toast {
-    display: none;
-    position: absolute; top: 8px; right: 10px;
-    font-size: 11px; color: var(--green);
     font-family: var(--font);
+    color: var(--text);
+    transition: background .15s;
   }
-  .copy-box.copied .copy-toast { display: block; }
+  .copy-btn:hover { background: var(--border); }
+  .copy-btn.copied { color: var(--green); border-color: var(--green); }
 </style>
 </head>
 <body>
@@ -462,19 +466,15 @@
 
   <div class="copy-section">
     <h2>コピー用テキスト</h2>
-    <div>
+    <div class="copy-item">
       <div class="copy-label">交通費</div>
-      <div class="copy-box" id="copy-box-fare" onclick="copyFare()">
-        <span id="copy-content-fare"></span>
-        <span class="copy-toast">コピーしました</span>
-      </div>
+      <div class="copy-box" id="copy-content-fare"></div>
+      <button class="copy-btn" id="copy-btn-fare" onclick="copyFare()">コピー</button>
     </div>
-    <div>
+    <div class="copy-item">
       <div class="copy-label">勤怠サマリー</div>
-      <div class="copy-box" id="copy-box-summary" onclick="copySummary()">
-        <span id="copy-content-summary"></span>
-        <span class="copy-toast">コピーしました</span>
-      </div>
+      <div class="copy-box" id="copy-content-summary"></div>
+      <button class="copy-btn" id="copy-btn-summary" onclick="copySummary()">コピー</button>
     </div>
   </div>
 
@@ -801,17 +801,17 @@ document.getElementById('koil-fare').addEventListener('input',updateSummary);
 function copyFare(){
   const text = document.getElementById('copy-content-fare').textContent;
   navigator.clipboard.writeText(text).then(()=>{
-    const box = document.getElementById('copy-box-fare');
-    box.classList.add('copied');
-    setTimeout(()=>box.classList.remove('copied'), 1500);
+    const btn = document.getElementById('copy-btn-fare');
+    btn.textContent = 'コピーしました'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='コピー'; btn.classList.remove('copied'); }, 1500);
   });
 }
 function copySummary(){
   const text = document.getElementById('copy-content-summary').textContent;
   navigator.clipboard.writeText(text).then(()=>{
-    const box = document.getElementById('copy-box-summary');
-    box.classList.add('copied');
-    setTimeout(()=>box.classList.remove('copied'), 1500);
+    const btn = document.getElementById('copy-btn-summary');
+    btn.textContent = 'コピーしました'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='コピー'; btn.classList.remove('copied'); }, 1500);
   });
 }
 
