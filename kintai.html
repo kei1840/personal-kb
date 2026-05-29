@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>勤怠管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --border: #e0dbd0;
+    --text: #1a1816;
+    --text-muted: #8a857a;
+    --red: #c0392b;
+    --red-bg: #fdf0ee;
+    --blue: #1a5fa8;
+    --blue-bg: #eaf2fb;
+    --green: #1e7a4a;
+    --green-bg: #eaf5ef;
+    --orange: #c05c00;
+    --orange-bg: #fdf3e7;
+    --purple: #6b3fa0;
+    --purple-bg: #f3eefb;
+    --wed: #7a5c00;
+    --wed-bg: #fdf8e7;
+    --radius: 8px;
+    --font: 'Noto Sans JP', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 16px;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+
+  .month-nav { display: flex; align-items: center; gap: 8px; }
+
+  .month-nav button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: 32px; height: 32px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .month-nav button:hover { background: var(--surface2); }
+
+  #month-label {
+    font-size: 16px; font-weight: 500;
+    min-width: 100px; text-align: center;
+  }
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .sum-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+  .sum-card .label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .sum-card .value { font-size: 20px; font-weight: 700; font-family: var(--mono); }
+  .sum-card .unit  { font-size: 11px; color: var(--text-muted); margin-left: 2px; }
+
+  .settings-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+  }
+  .settings-bar label {
+    font-size: 12px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .settings-bar input[type="number"] {
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 4px 8px; font-family: var(--mono); font-size: 13px;
+    width: 90px; background: var(--bg);
+  }
+
+  .cal-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+
+  .cal-head-cell {
+    text-align: center; padding: 10px 4px;
+    font-size: 11px; font-weight: 500;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .cal-head-cell.sun, .cal-head-cell.sat { color: var(--red); }
+
+  .day-cell {
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    min-height: 88px;
+    padding: 6px;
+    cursor: pointer;
+    position: relative;
+    transition: filter 0.1s;
+  }
+  .day-cell:nth-child(7n) { border-right: none; }
+  .day-cell:hover { filter: brightness(0.97); }
+  .day-cell.empty { background: var(--bg); cursor: default; }
+  .day-cell.empty:hover { filter: none; }
+
+  .day-cell.type-holiday { background: var(--red-bg); }
+  .day-cell.type-home    { background: var(--blue-bg); }
+  .day-cell.type-koil    { background: var(--green-bg); }
+  .day-cell.type-outing  { background: var(--purple-bg); }
+  .day-cell.type-wed     { background: var(--wed-bg); }
+
+  /* 外出フラグがついた在宅/KOILはストライプで区別 */
+  .day-cell.type-home.has-outing {
+    background: linear-gradient(135deg, var(--blue-bg) 60%, var(--purple-bg) 100%);
+  }
+  .day-cell.type-koil.has-outing {
+    background: linear-gradient(135deg, var(--green-bg) 60%, var(--purple-bg) 100%);
+  }
+
+  .day-num { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .day-cell.type-holiday .day-num { color: var(--red); }
+  .day-cell.type-wed     .day-num { color: var(--wed); }
+
+  .day-type-label {
+    font-size: 9px; font-weight: 500;
+    padding: 1px 5px; border-radius: 3px;
+    display: inline-block; margin-bottom: 2px;
+  }
+  .type-holiday .day-type-label { background: #f5c6c2; color: var(--red); }
+  .type-home    .day-type-label { background: #c5ddf6; color: var(--blue); }
+  .type-koil    .day-type-label { background: #b8e4cb; color: var(--green); }
+  .type-outing  .day-type-label { background: #dcc9f5; color: var(--purple); }
+  .type-wed     .day-type-label { background: #f0de9a; color: var(--wed); }
+  .has-outing   .day-type-label { background: #c5ddf6; color: var(--blue); }
+  .type-koil.has-outing .day-type-label { background: #b8e4cb; color: var(--green); }
+
+  .outing-tag {
+    font-size: 9px; color: var(--purple);
+    background: #dcc9f5;
+    border-radius: 3px; padding: 1px 5px;
+    margin-top: 2px; display: block;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .expense-tag {
+    font-size: 9px; color: var(--orange);
+    background: var(--orange-bg);
+    border-radius: 3px; padding: 1px 5px;
+    margin-top: 2px; display: inline-block;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 100; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: 12px; padding: 24px;
+    width: 360px; max-width: calc(100vw - 32px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal h2 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+
+  .modal-field { margin-bottom: 14px; }
+  .modal-field label {
+    display: block; font-size: 11px;
+    color: var(--text-muted); margin-bottom: 5px;
+  }
+  .modal-field select,
+  .modal-field input[type="number"],
+  .modal-field input[type="text"] {
+    width: 100%; border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 10px;
+    font-family: var(--font); font-size: 13px;
+    background: var(--bg);
+  }
+
+  .divider {
+    border: none; border-top: 1px solid var(--border);
+    margin: 16px 0;
+  }
+
+  .section-label {
+    font-size: 11px; font-weight: 700;
+    color: var(--purple); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .toggle-row {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 12px;
+  }
+  .toggle-row span { font-size: 13px; }
+
+  .toggle {
+    position: relative; width: 40px; height: 22px;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0;
+    background: var(--border); border-radius: 22px;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .slider:before {
+    content: '';
+    position: absolute; left: 3px; top: 3px;
+    width: 16px; height: 16px;
+    background: white; border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .toggle input:checked + .slider { background: var(--purple); }
+  .toggle input:checked + .slider:before { transform: translateX(18px); }
+
+  .outing-fields { display: none; }
+  .outing-fields.visible { display: block; }
+
+  /* 複数外出 */
+  .outing-entry {
+    background: var(--purple-bg);
+    border: 1px solid #dcc9f5;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .outing-entry .remove-btn {
+    position: absolute; top: 8px; right: 8px;
+    background: none; border: none;
+    color: var(--text-muted); cursor: pointer;
+    font-size: 14px; line-height: 1;
+    padding: 2px 4px;
+  }
+  .outing-entry .remove-btn:hover { color: var(--red); }
+  .outing-entry input {
+    width: 100%; border: 1px solid var(--border);
+    border-radius: 5px; padding: 6px 8px;
+    font-family: var(--font); font-size: 12px;
+    background: var(--surface); margin-top: 6px;
+  }
+  .outing-entry input:first-of-type { margin-top: 0; }
+  .outing-entry label { font-size: 10px; color: var(--text-muted); display: block; margin-top: 6px; margin-bottom: 2px; }
+
+  .add-outing-btn {
+    width: 100%; padding: 8px;
+    background: var(--purple-bg);
+    border: 1px dashed #c0a0e8;
+    border-radius: 6px; font-size: 12px;
+    color: var(--purple); cursor: pointer;
+    font-family: var(--font);
+    transition: background 0.15s;
+  }
+  .add-outing-btn:hover { background: #e8d8f8; }
+
+  .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+  .btn {
+    flex: 1; padding: 10px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--border); font-family: var(--font);
+    transition: background 0.15s;
+  }
+  .btn-primary { background: var(--text); color: #fff; border-color: var(--text); }
+  .btn-primary:hover { background: #333; }
+  .btn-cancel { background: var(--surface2); }
+  .btn-cancel:hover { background: var(--border); }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--text-muted);
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  .expense-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .expense-section h2 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+
+  .expense-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .expense-row:last-child { border-bottom: none; }
+  .expense-row .exp-label { color: var(--text-muted); font-size: 12px; }
+  .expense-row .exp-val   { font-family: var(--mono); font-weight: 500; }
+  .exp-outing             { color: var(--purple); }
+
+  .total-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 12px; margin-top: 4px;
+    font-weight: 700; font-size: 15px;
+  }
+  .total-row .exp-val { font-family: var(--mono); font-size: 18px; }
+  .note { font-size: 10px; color: var(--text-muted); margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>勤怠管理</h1>
+    <div class="month-nav">
+      <button id="prev-btn">‹</button>
+      <span id="month-label"></span>
+      <button id="next-btn">›</button>
+    </div>
+  </header>
+
+  <div class="settings-bar">
+    <label>
+      KOIL往復交通費
+      <input type="number" id="koil-fare" value="1964" min="0" step="2"> 円／日
+    </label>
+    <span style="font-size:11px;color:var(--text-muted)">※ セルをクリックして編集</span>
+  </div>
+
+  <div class="summary">
+    <div class="sum-card">
+      <div class="label">出勤日数</div>
+      <div class="value" id="s-total">—<span class="unit">日</span></div>
+    </div>
+    <div class="sum-card">
+      <div class="label">在宅</div>
+      <div class="value" id="s-home" style="color:var(--blue)">—<span class="unit">日</span></div>
+    </div>
+    <div class="sum-card">
+      <div class="label">KOIL出社</div>
+      <div class="value" id="s-koil" style="color:var(--green)">—<span class="unit">日</span></div>
+    </div>
+    <div class="sum-card">
+      <div class="label">外出あり</div>
+      <div class="value" id="s-outing" style="color:var(--purple)">—<span class="unit">日</span></div>
+    </div>
+    <div class="sum-card">
+      <div class="label">KOIL交通費</div>
+      <div class="value" id="s-koil-exp" style="color:var(--orange)">—<span class="unit">円</span></div>
+    </div>
+    <div class="sum-card">
+      <div class="label">外出交通費計</div>
+      <div class="value" id="s-extra-exp" style="color:var(--purple)">—<span class="unit">円</span></div>
+    </div>
+    <div class="sum-card" style="border-color:#aaa;">
+      <div class="label">交通費合計</div>
+      <div class="value" id="s-total-exp">—<span class="unit">円</span></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#f5c6c2"></div>休日・祝日</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#c5ddf6"></div>在宅</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#b8e4cb"></div>KOIL出社</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#dcc9f5"></div>外出のみ</div>
+    <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,#eaf2fb 50%,#f3eefb 100%);border:1px solid #dcc9f5"></div>在宅／KOIL＋外出</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f0de9a"></div>水休み</div>
+  </div>
+
+  <div class="cal-wrap">
+    <div class="cal-grid" id="cal-grid">
+      <div class="cal-head-cell sun">日</div>
+      <div class="cal-head-cell">月</div>
+      <div class="cal-head-cell">火</div>
+      <div class="cal-head-cell">水</div>
+      <div class="cal-head-cell">木</div>
+      <div class="cal-head-cell">金</div>
+      <div class="cal-head-cell sat">土</div>
+    </div>
+  </div>
+
+  <div class="expense-section">
+    <h2>交通費明細</h2>
+    <div id="expense-list"></div>
+    <div class="total-row">
+      <span>合計</span>
+      <span class="exp-val" id="exp-total">¥0</span>
+    </div>
+    <p class="note">※ KOIL交通費 = 往復運賃 × KOIL出社日数　／　外出交通費 = 各外出先の実費</p>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h2 id="modal-title">日付の編集</h2>
+
+    <div class="modal-field">
+      <label>勤務種別</label>
+      <select id="modal-type">
+        <option value="holiday">休日（土・日・祝・水休み）</option>
+        <option value="home">在宅勤務</option>
+        <option value="koil">KOIL出社</option>
+        <option value="outing">外出のみ</option>
+        <option value="wed">水曜休み</option>
+      </select>
+    </div>
+
+    <hr class="divider">
+
+    <div class="toggle-row">
+      <span style="font-size:13px;font-weight:500;color:var(--purple)">🚶 外出あり</span>
+      <label class="toggle">
+        <input type="checkbox" id="modal-outing-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="outing-fields" id="outing-fields">
+      <div id="outing-entries"></div>
+      <button class="add-outing-btn" id="add-outing-btn">＋ 外出先を追加</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-cancel" id="modal-cancel">キャンセル</button>
+      <button class="btn btn-primary" id="modal-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const HOLIDAYS = {
+  '2026-01-01':'元日','2026-01-12':'成人の日',
+  '2026-02-11':'建国記念の日','2026-02-23':'天皇誕生日',
+  '2026-03-20':'春分の日',
+  '2026-04-29':'昭和の日',
+  '2026-05-03':'憲法記念日','2026-05-04':'みどりの日',
+  '2026-05-05':'こどもの日','2026-05-06':'振替休日',
+  '2026-07-20':'海の日','2026-08-11':'山の日',
+  '2026-09-21':'敬老の日','2026-09-22':'国民の休日','2026-09-23':'秋分の日',
+  '2026-10-12':'体育の日',
+  '2026-11-03':'文化の日','2026-11-23':'勤労感謝の日',
+};
+
+let currentYear = 2026, currentMonth = 5;
+const overrides = JSON.parse(localStorage.getItem('kintai_overrides2') || '{}');
+let editingKey = null;
+
+function key(y,m,d){return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
+
+function defaultType(y,m,d){
+  const dow = new Date(y,m-1,d).getDay();
+  const k = key(y,m,d);
+  if(dow===0||dow===6) return 'holiday';
+  if(HOLIDAYS[k]) return 'holiday';
+  if(dow===3) return 'wed';
+  if(dow===1||dow===4) return 'home';
+  if(dow===2||dow===5) return 'koil';
+  return 'holiday';
+}
+
+function getType(y,m,d){
+  const k=key(y,m,d);
+  return overrides[k]?.type ?? defaultType(y,m,d);
+}
+
+function typeLabel(t){
+  return {holiday:'休日',home:'在宅',koil:'KOIL出社',outing:'外出',wed:'水休み'}[t]||t;
+}
+
+function fmt(n){return n.toLocaleString('ja-JP');}
+
+// ── カレンダー描画 ───────────────────────────────────────
+function renderCalendar(){
+  const grid = document.getElementById('cal-grid');
+  while(grid.children.length > 7) grid.removeChild(grid.lastChild);
+
+  const firstDay = new Date(currentYear,currentMonth-1,1).getDay();
+  const daysInMonth = new Date(currentYear,currentMonth,0).getDate();
+
+  for(let i=0;i<firstDay;i++){
+    const el=document.createElement('div');
+    el.className='day-cell empty';
+    grid.appendChild(el);
+  }
+
+  for(let d=1;d<=daysInMonth;d++){
+    const k=key(currentYear,currentMonth,d);
+    const t=getType(currentYear,currentMonth,d);
+    const over=overrides[k]||{};
+    const holidayName=HOLIDAYS[k];
+    const outings=over.outings||[]; // [{dest, expense}]
+    const hasOuting=outings.length>0;
+
+    const cell=document.createElement('div');
+    cell.className=`day-cell type-${t}${hasOuting?' has-outing':''}`;
+
+    const numEl=document.createElement('div');
+    numEl.className='day-num';
+    numEl.textContent=d;
+    cell.appendChild(numEl);
+
+    const lblEl=document.createElement('div');
+    lblEl.className='day-type-label';
+    if(holidayName && t==='holiday') lblEl.textContent=holidayName;
+    else lblEl.textContent=typeLabel(t);
+    cell.appendChild(lblEl);
+
+    // 外出タグ
+    outings.forEach(o=>{
+      const tag=document.createElement('div');
+      tag.className='outing-tag';
+      const expStr = o.expense>0 ? ` ¥${fmt(o.expense)}` : '';
+      tag.textContent=`🚶 ${o.dest||'外出'}${expStr}`;
+      cell.appendChild(tag);
+    });
+
+    cell.addEventListener('click',()=>openModal(k,d,t,outings));
+    grid.appendChild(cell);
+  }
+
+  updateSummary();
+}
+
+// ── 集計 ─────────────────────────────────────────────────
+function updateSummary(){
+  const fare=parseInt(document.getElementById('koil-fare').value)||0;
+  const daysInMonth=new Date(currentYear,currentMonth,0).getDate();
+
+  let home=0,koil=0,outingDays=0,extraExp=0;
+  const expDetails=[];
+
+  for(let d=1;d<=daysInMonth;d++){
+    const k=key(currentYear,currentMonth,d);
+    const t=getType(currentYear,currentMonth,d);
+    const over=overrides[k]||{};
+    const outings=over.outings||[];
+
+    if(t==='home') home++;
+    if(t==='koil') koil++;
+    if(t==='outing') outingDays++; // 外出のみ日も出勤扱い
+    if(outings.length>0){
+      if(t!=='outing') outingDays++; // 在宅/KOILに外出フラグ付き
+      outings.forEach(o=>{
+        if(o.expense>0){
+          extraExp+=o.expense;
+          expDetails.push({d, dest:o.dest||'外出', expense:o.expense});
+        }
+      });
+    }
+  }
+
+  const total=home+koil+outingDays-(overrides ? countOutingOnlyDays() : 0);
+  // 外出のみは既にoutingDaysに含むので重複しないよう調整
+  const totalWork = home+koil+(Object.values(overrides).filter(v=>v.type==='outing').length);
+  const koilExp=koil*fare;
+  const totalExp=koilExp+extraExp;
+
+  document.getElementById('s-total').innerHTML=`${totalWork}<span class="unit">日</span>`;
+  document.getElementById('s-home').innerHTML=`${home}<span class="unit">日</span>`;
+  document.getElementById('s-koil').innerHTML=`${koil}<span class="unit">日</span>`;
+  document.getElementById('s-outing').innerHTML=`${outingDays}<span class="unit">日</span>`;
+  document.getElementById('s-koil-exp').innerHTML=`${fmt(koilExp)}<span class="unit">円</span>`;
+  document.getElementById('s-extra-exp').innerHTML=`${fmt(extraExp)}<span class="unit">円</span>`;
+  document.getElementById('s-total-exp').innerHTML=`${fmt(totalExp)}<span class="unit">円</span>`;
+
+  const listEl=document.getElementById('expense-list');
+  listEl.innerHTML='';
+
+  const koilRow=document.createElement('div');
+  koilRow.className='expense-row';
+  koilRow.innerHTML=`<div><div>KOIL交通費</div><div class="exp-label">¥${fmt(fare)} × ${koil}日</div></div><div class="exp-val">¥${fmt(koilExp)}</div>`;
+  listEl.appendChild(koilRow);
+
+  expDetails.sort((a,b)=>a.d-b.d).forEach(({d,dest,expense})=>{
+    const row=document.createElement('div');
+    row.className='expense-row';
+    row.innerHTML=`<div><div class="exp-outing">${currentMonth}/${d} ${dest}</div></div><div class="exp-val exp-outing">¥${fmt(expense)}</div>`;
+    listEl.appendChild(row);
+  });
+
+  if(expDetails.length===0){
+    const row=document.createElement('div');
+    row.className='expense-row';
+    row.innerHTML=`<div style="color:var(--text-muted);font-size:12px">外出交通費なし</div><div class="exp-val">¥0</div>`;
+    listEl.appendChild(row);
+  }
+
+  document.getElementById('exp-total').textContent=`¥${fmt(totalExp)}`;
+}
+
+function countOutingOnlyDays(){
+  const daysInMonth=new Date(currentYear,currentMonth,0).getDate();
+  let c=0;
+  for(let d=1;d<=daysInMonth;d++){
+    const k=key(currentYear,currentMonth,d);
+    if(overrides[k]?.type==='outing') c++;
+  }
+  return c;
+}
+
+// ── モーダル ──────────────────────────────────────────────
+function openModal(k,d,currentType,currentOutings){
+  editingKey=k;
+  document.getElementById('modal-title').textContent=`${currentMonth}月${d}日の編集`;
+  document.getElementById('modal-type').value=currentType;
+
+  const hasOuting = currentOutings.length>0 || currentType==='outing';
+  document.getElementById('modal-outing-toggle').checked=hasOuting;
+  document.getElementById('outing-fields').classList.toggle('visible',hasOuting);
+
+  const entriesEl=document.getElementById('outing-entries');
+  entriesEl.innerHTML='';
+  const initOutings = currentOutings.length>0 ? currentOutings : (currentType==='outing' ? [{dest:'',expense:0}] : []);
+  initOutings.forEach(o=>addOutingEntry(o.dest||'', o.expense||0));
+  if(initOutings.length===0 && hasOuting) addOutingEntry('',0);
+
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function addOutingEntry(dest='', expense=0){
+  const entriesEl=document.getElementById('outing-entries');
+  const div=document.createElement('div');
+  div.className='outing-entry';
+  div.innerHTML=`
+    <button class="remove-btn" title="削除">✕</button>
+    <label>行き先</label>
+    <input type="text" class="outing-dest" placeholder="例: 渋谷クライアント先" value="${dest}">
+    <label>交通費（実費・円）</label>
+    <input type="number" class="outing-exp" min="0" step="10" placeholder="0" value="${expense||''}">
+  `;
+  div.querySelector('.remove-btn').addEventListener('click',()=>{
+    div.remove();
+    if(document.getElementById('outing-entries').children.length===0){
+      document.getElementById('modal-outing-toggle').checked=false;
+      document.getElementById('outing-fields').classList.remove('visible');
+    }
+  });
+  entriesEl.appendChild(div);
+}
+
+document.getElementById('modal-outing-toggle').addEventListener('change',function(){
+  const fields=document.getElementById('outing-fields');
+  fields.classList.toggle('visible',this.checked);
+  if(this.checked && document.getElementById('outing-entries').children.length===0){
+    addOutingEntry('',0);
+  }
+});
+
+document.getElementById('add-outing-btn').addEventListener('click',()=>addOutingEntry('',0));
+
+document.getElementById('modal-cancel').addEventListener('click',()=>{
+  document.getElementById('modal-overlay').classList.remove('open');
+});
+
+document.getElementById('modal-overlay').addEventListener('click',(e)=>{
+  if(e.target===document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').classList.remove('open');
+});
+
+document.getElementById('modal-save').addEventListener('click',()=>{
+  const type=document.getElementById('modal-type').value;
+  const outingToggle=document.getElementById('modal-outing-toggle').checked;
+
+  let outings=[];
+  if(outingToggle){
+    document.querySelectorAll('.outing-entry').forEach(entry=>{
+      const dest=entry.querySelector('.outing-dest').value.trim();
+      const expense=parseInt(entry.querySelector('.outing-exp').value)||0;
+      if(dest||expense>0) outings.push({dest,expense});
+    });
+  }
+
+  const [y,m,d]=editingKey.split('-').map(Number);
+  const defType=defaultType(y,m,d);
+  if(type===defType && outings.length===0){
+    delete overrides[editingKey];
+  } else {
+    overrides[editingKey]={type, outings};
+  }
+
+  localStorage.setItem('kintai_overrides2',JSON.stringify(overrides));
+  document.getElementById('modal-overlay').classList.remove('open');
+  renderCalendar();
+});
+
+// ── 月ナビ ────────────────────────────────────────────────
+function updateMonthLabel(){
+  document.getElementById('month-label').textContent=`${currentYear}年${currentMonth}月`;
+}
+
+document.getElementById('prev-btn').addEventListener('click',()=>{
+  currentMonth--;
+  if(currentMonth<1){currentMonth=12;currentYear--;}
+  updateMonthLabel(); renderCalendar();
+});
+
+document.getElementById('next-btn').addEventListener('click',()=>{
+  currentMonth++;
+  if(currentMonth>12){currentMonth=1;currentYear++;}
+  updateMonthLabel(); renderCalendar();
+});
+
+document.getElementById('koil-fare').addEventListener('input',updateSummary);
+
+updateMonthLabel();
+renderCalendar();
+</script>
+</body>
+</html>
