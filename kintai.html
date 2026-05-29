@@ -466,7 +466,7 @@
   <div class="copy-section">
     <h2>コピー用テキスト</h2>
     <div class="copy-item">
-      <div class="copy-label">交通費</div>
+      <div class="copy-label">KOIL交通費</div>
       <div class="copy-box" id="copy-content-fare"></div>
       <button class="copy-btn" id="copy-btn-fare" onclick="copyFare()">コピー</button>
     </div>
@@ -678,7 +678,7 @@ function updateSummary(){
   document.getElementById('exp-total').textContent=`¥${fmt(totalExp)}`;
 
   // コピー用テキスト生成
-  document.getElementById('copy-content-fare').textContent = `KOIL交通費: ¥${fmt(fare)} × ${koil}日 = ¥${fmt(koilExp)}`;
+  document.getElementById('copy-content-fare').textContent = `¥${fmt(fare)} × ${koil}日 = ¥${fmt(koilExp)}`;
   document.getElementById('copy-content-summary').textContent =
     `${currentYear}年${currentMonth}月 勤怠サマリー\n出勤日数: ${totalWork}日\nKOIL: ${koil}日\n外出: ${outingDays}日\n在宅: ${home}日`;
 }
