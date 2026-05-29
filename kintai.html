@@ -394,14 +394,6 @@
     </div>
   </header>
 
-  <div class="settings-bar">
-    <label>
-      KOIL往復交通費
-      <input type="number" id="koil-fare" value="1964" min="0" step="2"> 円／日
-    </label>
-    <span style="font-size:11px;color:var(--text-muted)">※ セルをクリックして編集</span>
-  </div>
-
   <div class="summary">
     <div class="sum-card">
       <div class="label">出勤日数</div>
@@ -456,6 +448,10 @@
 
   <div class="expense-section">
     <h2>交通費明細</h2>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12px;color:var(--text-muted)">
+      KOIL往復交通費
+      <input type="number" id="koil-fare" value="1964" min="0" step="2" style="border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:var(--mono);font-size:13px;width:90px;background:var(--bg);color:var(--text)"> 円／日
+    </div>
     <div id="expense-list"></div>
     <div class="total-row">
       <span>合計</span>
