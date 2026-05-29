@@ -448,9 +448,12 @@
 
   <div class="expense-section">
     <h2>交通費明細</h2>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12px;color:var(--text-muted)">
-      KOIL往復交通費
-      <input type="number" id="koil-fare" value="1964" min="0" step="2" style="border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:var(--mono);font-size:13px;width:90px;background:var(--bg);color:var(--text)"> 円／日
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);margin-bottom:6px;">
+        KOIL往復交通費
+        <input type="number" id="koil-fare" value="1964" min="0" step="2" style="border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:var(--mono);font-size:13px;width:90px;background:var(--bg);color:var(--text)"> 円／日
+      </div>
+      <input type="text" id="koil-route" value="京成小岩 → 京成関屋 → 牛田(東京都) → 北千住 → 柏の葉キャンパス" style="width:100%;border:1px solid var(--border);border-radius:4px;padding:5px 10px;font-size:12px;color:var(--text-muted);background:var(--bg);font-family:var(--font);">
     </div>
     <div id="expense-list"></div>
     <div class="total-row">
